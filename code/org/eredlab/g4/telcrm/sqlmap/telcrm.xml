@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<!-- telcrm -->
+<sqlMap>
+	<typeAlias alias="dto" type="org.eredlab.g4.ccl.datastructure.impl.BaseDto" />
+   
+   <select id="telcrmCustomer_selectByExample" parameterClass="map" resultClass="dto">
+    select * from
+    (select a.id, a.name, a.linkname, a.tel, a.phone, a.fax, a.email, a.addr, a.status, a.ownerid, a.deptid, a.recycletime,
+      a.sgusrid, a.deleted, a.inusrid, a.intime, a.lastcalltime, a.lstupdateusrid, a.remark,
+       (SELECT deptname
+		          FROM eadept
+		         WHERE deptid = a.deptid) AS deptname,
+	(SELECT username
+		          FROM eauser
+		         WHERE userid = a.ownerid) AS ownername,
+    (SELECT CODEDESC
+		          FROM eacode
+		         WHERE field='CUSTOMER_STATUS' and code = a.status) AS statusname,
+     (SELECT ts.id
+		          FROM telcrm_salesplan ts
+		         WHERE ts.userid=a.ownerid and ts.custid = a.id) AS salesplanid
+    from (telcrm_customer a) where 1=1 and deleted=0
+   <dynamic>
+			<isNotEmpty prepend="AND" property="deptid"> 
+				a.deptid like '$deptid$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="ownerid"> 
+				a.ownerid like '$ownerid$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="status"> 
+				a.status like '$status$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="queryParam"> 
+				                    a.name like '%$queryParam$%' 
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="contacted_true"> 
+				                   a.lastcalltime between '$fromLastCallTime$' and '$toCallLastTime$'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="contacted_false"> 
+				                        a.lastcalltime &lt;'$fromLastCallTime$'
+			</isNotEmpty>
+		</dynamic>
+		) as cs where 1=1
+     <dynamic>
+			<isNotEmpty prepend="AND" property="salesplanid">
+				cs.salesplanid is not null
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="name">
+				cs.name like '%$name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="deleted">
+				cs.deleted=$deleted$
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="linkname">
+			    cs.linkname like '%$linkname$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="ownername">
+			    cs.ownername like '%$ownername$%'
+			</isNotEmpty>
+			order by cs.lastcalltime,cs.name
+		</dynamic>
+  </select>
+  <select id="queryCustomersForManageForPageCount" parameterClass="map" resultClass="java.lang.Integer">
+		SELECT count(*) as count
+		  FROM telcrm_customer a where 1=1 and deleted=0
+		<dynamic>
+			<isNotEmpty prepend="AND" property="deptid"> 
+				a.deptid like '$deptid$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="ownerid"> 
+				a.ownerid like '$ownerid$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="status"> 
+				a.status like '$status$%'
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<select id="queryCustomersForSailingForPageCount" parameterClass="map" resultClass="java.lang.Integer">
+		 select count(*) as count from
+    (select a.id, a.name, a.linkname, a.tel, a.phone, a.fax, a.email, a.addr, a.status, a.ownerid, a.deptid, a.recycletime,
+      a.sgusrid, a.deleted, a.inusrid, a.intime, a.lastcalltime, a.lstupdateusrid, a.remark,
+       (SELECT deptname
+		          FROM eadept
+		         WHERE deptid = a.deptid) AS deptname,
+	(SELECT username
+		          FROM eauser
+		         WHERE userid = a.ownerid) AS ownername,
+    (SELECT CODEDESC
+		          FROM eacode
+		         WHERE field='CUSTOMER_STATUS' and code = a.status) AS statusname,
+     (SELECT ts.id
+		          FROM telcrm_salesplan ts
+		         WHERE ts.userid=a.ownerid and ts.custid = a.id) AS salesplanid
+    from (telcrm_customer a) where 1=1 and deleted=0
+   <dynamic>
+			<isNotEmpty prepend="AND" property="deptid"> 
+				a.deptid like '$deptid$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="ownerid"> 
+				a.ownerid like '$ownerid$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="status"> 
+				a.status like '$status$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="queryParam"> 
+				                    a.name like '%$queryParam$%' 
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="contacted_true"> 
+				                   a.lastcalltime between '$fromLastCallTime$' and '$toCallLastTime$'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="contacted_false"> 
+				                        a.lastcalltime &lt;'$fromLastCallTime$'
+			</isNotEmpty>
+		</dynamic>
+		) as cs where 1=1
+     <dynamic>
+			<isNotEmpty prepend="AND" property="salesplanid">
+				cs.salesplanid is not null
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="name">
+				cs.name like '%$name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="deleted">
+				cs.deleted=$deleted$
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="linkname">
+			    cs.linkname like '%$linkname$%'
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	
+  <!-- 删除用户表  -->
+	<delete id="deleteCustomerInCustomerManage" parameterClass="map" >
+		update telcrm_customer set deleted=-1 where id = #id#
+	</delete>
+	<!-- 插入一条客户 -->
+	<insert id="insert_telcrmCustomer" parameterClass="dto">
+	 insert into telcrm_customer (id, name, linkname, tel, phone, fax, email, addr, status, ownerid,
+      deptid, recycletime, sgusrid, inusrid, intime, lastcalltime, lstupdateusrid, deleted, remark,bid)
+    values (#id:VARCHAR#, #name:VARCHAR#, #linkname:VARCHAR#, #tel:VARCHAR#, #phone:VARCHAR#,
+      #fax:VARCHAR#, #email:VARCHAR#, #addr:VARCHAR#, #status:INTEGER#, #ownerid:VARCHAR#,
+      #deptid:VARCHAR#, #recycletime:TIMESTAMP#, #sgusrid:VARCHAR#, #inusrid:VARCHAR#,
+      #intime:TIMESTAMP#, #lastcalltime:TIMESTAMP#, #lstupdateusrid:VARCHAR#, #deleted:INTEGER#,
+      #remark:VARCHAR#, #bid:VARCHAR#)
+	</insert>
+	<!-- 根据主键更新客户 -->
+	<update id="updateCustomerItem" parameterClass="dto">
+    update telcrm_customer
+    <dynamic prepend="set">
+      <isNotNull prepend="," property="name">
+        name = #name:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="linkname">
+        linkname = #linkname:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="tel">
+        tel = #tel:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="phone">
+        phone = #phone:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="fax">
+        fax = #fax:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="email">
+        email = #email:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="addr">
+        addr = #addr:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="status">
+        status = #status:INTEGER#
+      </isNotNull>
+      <isNotNull prepend="," property="ownerid">
+        ownerid = #ownerid:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="deptid">
+        deptid = #deptid:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="recycletime">
+        recycletime = #recycletime:TIMESTAMP#
+      </isNotNull>
+      <isNotNull prepend="," property="sgusrid">
+        sgusrid = #sgusrid:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="inusrid">
+        inusrid = #inusrid:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="intime">
+        intime = #intime:TIMESTAMP#
+      </isNotNull>
+      <isNotNull prepend="," property="lastcalltime">
+        lastcalltime = #lastcalltime:TIMESTAMP#
+      </isNotNull>
+      <isNotNull prepend="," property="lstupdateusrid">
+        lstupdateusrid = #lstupdateusrid:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="deleted">
+        deleted = #deleted:INTEGER#
+      </isNotNull>
+      <isNotNull prepend="," property="remark">
+        remark = #remark:VARCHAR#
+      </isNotNull>
+       <isNotNull prepend="," property="bid">
+        bid = #bid:VARCHAR#
+      </isNotNull>
+    </dynamic>
+    where id = #id:VARCHAR#
+  </update>
+  <!-- 根据主键更新客户 -->
+	<update id="updateCustomerItem2" parameterClass="dto">
+    update telcrm_customer
+    <dynamic prepend="set">
+      <isNotNull prepend="," property="name">
+        name = #name:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="linkname">
+        linkname = #linkname:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="tel">
+        tel = #tel:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="phone">
+        phone = #phone:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="fax">
+        fax = #fax:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="email">
+        email = #email:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="addr">
+        addr = #addr:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="status">
+        status = #status:INTEGER#
+      </isNotNull>
+      <isNotNull prepend="," property="ownerid">
+        ownerid = #ownerid:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="deptid">
+        deptid = #deptid:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="recycletime">
+        recycletime = #recycletime:TIMESTAMP#
+      </isNotNull>
+      <isNotNull prepend="," property="sgusrid">
+        sgusrid = #sgusrid:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="inusrid">
+        inusrid = #inusrid:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="intime">
+        intime = #intime:TIMESTAMP#
+      </isNotNull>
+      <isNotNull prepend="," property="lastcalltime">
+        lastcalltime = #lastcalltime:TIMESTAMP#
+      </isNotNull>
+      <isNotNull prepend="," property="lstupdateusrid">
+        lstupdateusrid = #lstupdateusrid:VARCHAR#
+      </isNotNull>
+      <isNotNull prepend="," property="deleted">
+        deleted = #deleted:INTEGER#
+      </isNotNull>
+      <isNotNull prepend="," property="remark">
+        remark = #remark:VARCHAR#
+      </isNotNull>
+       <isNotNull prepend="," property="bid">
+        bid = #bid:VARCHAR#
+      </isNotNull>
+    </dynamic>
+    where bid = #bid:VARCHAR#
+  </update>
+  
+ <!-- Sales -->
+ <insert id="insert_salesPlan" parameterClass="dto">
+	INSERT INTO telcrm_salesplan (
+		   id, userid, custid) 
+		VALUES (#id#, #userid#, #custid#)
+ </insert>
+
+ <delete id="telcrmSales_deleteSalesPlan" parameterClass="map">
+       DELETE FROM telcrm_salesplan WHERE id = #salesplanid#
+</delete>
+
+  <insert id="insert_sales" parameterClass="dto">
+	INSERT INTO telcrm_records (
+		   id, userid, custid,content,callTime,reCallTime) 
+		VALUES (#id#, #userid#, #custid#,#content#,#callTime#,#reCallTime#)
+ </insert>
+ <!--Sales records -->
+ <select id="telcrmCustomer_SalesRecords" parameterClass="map" resultClass="dto" remapResults="true">
+ select r.id,r.userid,r.content,r.callTime,r.reCallTime,
+ (SELECT u.username
+		          FROM eauser u
+		         WHERE u.userid = r.userid) AS username
+    from telcrm_records r
+    where 1=1
+      <dynamic>
+         <isNotEmpty prepend="AND" property="custid"> 
+				r.custid like '$custid$%'
+	     </isNotEmpty>
+     </dynamic>
+     order by r.callTime desc
+ </select>
+ <select id="telcrmCustomer_getCallRecordsCount" parameterClass="map" resultClass="java.lang.Integer">
+		SELECT count(*) as count
+		  FROM telcrm_records r where 1=1
+		<dynamic>
+			<isNotEmpty prepend="AND" property="custid"> 
+				r.custid like '$custid$%'
+	        </isNotEmpty>
+		</dynamic>
+	</select>
+ 
+ <!-- 部门管理-部门列表 -->
+	<select id="telcrm_queryDeptsForManage" parameterClass="map" resultClass="dto">
+	   SELECT   deptid, deptname, customid,
+	         (SELECT deptname
+	            FROM eadept
+	           WHERE deptid = a.parentid) AS parentdeptname,
+	         (SELECT COUNT(*)
+	            FROM eauser
+	           WHERE deptid = a.deptid) AS usercount,
+	         (SELECT COUNT(*)
+	            FROM earole
+	           WHERE deptid = a.deptid) AS rolecount, parentid, leaf, sortno,
+	         remark
+	       FROM eadept a
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="deptid"> 
+									a.deptid like '$deptid$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="parentid"> 
+									a.parentid = #parentid#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="deptname"> 
+									a.deptname like '%$deptname$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="bid"> 
+									a.bid='$bid$'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="queryParam"> 
+				                    a.deptname like '%$queryParam$%'
+			</isNotEmpty>
+		</dynamic>
+	   ORDER BY sortno DESC
+	</select>
+	
+	<!-- 插入一条部门记录 -->
+	<insert id="telcrm_saveDeptItem" parameterClass="dto">
+		INSERT INTO eadept (
+		   deptid, deptname, parentid, 
+		   customid,leaf, sortno, remark,bid) 
+		VALUES (#deptid#, #deptname#, #parentid#,
+		    #customid#, #leaf#, #sortno#, #remark#,#bid#)
+	</insert>
+    
+	
+	<!-- 根据主键更新菜单 -->
+	<update id="telcrm_updateDeptItem" parameterClass="dto">
+         UPDATE eadept
+		<dynamic prepend="SET"> 
+			<isNotNull prepend="," property="deptname">
+	         deptname = #deptname#
+			</isNotNull>
+			<isNotNull prepend="," property="parentid">
+	         parentid = #parentid#
+			</isNotNull>
+			<isNotNull prepend="," property="customid">
+	         customid = #customid#
+			</isNotNull>
+			<isNotNull prepend="," property="leaf">
+	         leaf = #leaf#
+			</isNotNull>
+			<isNotNull prepend="," property="sortno">
+	         sortno = #sortno#
+			</isNotNull>
+			<isNotNull prepend="," property="remark">
+	         remark = #remark#
+			</isNotNull>
+			<isNotNull prepend="," property="bid">
+	         bid = #bid#
+			</isNotNull>								
+		</dynamic> 
+	        WHERE bid = #bid#    
+	</update>
+	
+	
+	
+	<select id="telcrm_queryUsersForManage" parameterClass="map" resultClass="dto">
+		 SELECT userid, username, deptid, ACCOUNT, usertype,
+		       (SELECT deptname
+		          FROM eadept
+		         WHERE deptid = a.deptid) AS deptname, sex, LOCKED, remark,bid,deptid
+		  FROM eauser a WHERE a.usertype != '3'
+		<dynamic>
+			<isNotEmpty prepend="AND" property="usertype"> 
+									a.usertype != #usertype#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="userid"> 
+									a.userid like '$userid$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="deptid"> 
+									a.deptid like '$deptid$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="rolename"> 
+									a.username like '%$username$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="bid"> 
+									a.bid=#bid#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="queryParam"> 
+				                    a.username like '%$queryParam$%' 
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!-- 插入一条用户表记录 -->
+	<insert id="telcrm_saveUserItem" parameterClass="dto">
+		INSERT INTO EAUSER (
+		   userid, username, account, 
+		   password, sex, deptid, 
+		   locked, remark, usertype,bid) 
+		VALUES (#userid#, #username#, #account#,
+		    #password#, #sex#, #deptid#,
+		    #locked#,#remark#, #usertype#,#bid#)
+	</insert>
+	
+	<!-- 保存用户附属信息 -->
+	<insert id="telcrm_saveEausersubinfoItem" parameterClass="dto">
+		INSERT INTO eausersubinfo (
+		   userid, theme) 
+		VALUES ( #userid#, #theme#)
+	</insert>
+	
+	<!-- 插入一条角色用户关联记录 -->
+	<insert id="telcrm_saveSelectUser" parameterClass="dto">
+		INSERT INTO EAUSERAUTHORIZE (
+		   userid, roleid, authorizeid) 
+		VALUES ( #userid#, #roleid#, #authorizeid#)
+	</insert>
+	 <select id="telcrm_selectCustomers" parameterClass="map" resultClass="dto">
+	    select a.id, a.name, a.linkname, a.tel, a.phone, a.fax, a.email, a.addr, a.status, a.ownerid, a.deptid, a.recycletime,
+           a.sgusrid, a.deleted, a.inusrid, a.intime, a.lastcalltime, a.lstupdateusrid, a.remark,a.bid from telcrm_customer a 
+           where 1=1
+		 <dynamic>
+			   <isNotEmpty prepend="AND" property="bid"> 
+				   a.bid =#bid#
+			   </isNotEmpty>
+		  </dynamic>
+	 </select>
+</sqlMap>
